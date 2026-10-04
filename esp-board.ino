@@ -2,28 +2,24 @@
 #include <U8g2lib.h>
 #include <Wire.h>
 
-const int8_t BTN_DOWN = 0;
-const int8_t BTN_LEFT = 1;
-const int8_t BTN_UP = 2;
-const int8_t BTN_RIGHT = 3;
+#define BTN_DOWN 0
+#define BTN_LEFT 1
+#define BTN_UP 2
+#define BTN_RIGHT 3
 
-const int8_t I2C_SDA = 8;
-const int8_t I2C_SCL = 9;
+#define I2C_SDA 8
+#define I2C_SCL 9
 
 int8_t current_item = 1;
-int8_t items_draw = 1;
 
 const char *EXTRAS_ITEMS[] = {
     "IDONTKNOW",
     "IDONTKNOW",
     "IDONTKNOW",
     "IDONTKNOW",
-    "IDONTKNOW",
-    "IDONTKNOW",
-    "IDONTKNOW",
-    "IDONTKNOW",
-    "IDONTKNOW",
-    "IDONTKNOW"};
+};
+
+const int8_t EXTRAS_ITEMS_COUNT = sizeof(EXTRAS_ITEMS) / sizeof(EXTRAS_ITEMS[0]);
 
 enum AppState
 {
@@ -34,19 +30,10 @@ AppState APP_STATE = MainMenu;
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE, I2C_SCL, I2C_SDA);
 
-/*=============суперудобныйразделитель=============*/
-
-void loading()
-{
-  u8g2.clearBuffer();
-
-  u8g2.setFont(u8g2_font_t0_14b_me);
-  u8g2.drawStr(30, 35, "esp-board");
-  u8g2.setFont(u8g2_font_tiny5_tf);
-  u8g2.drawStr(50, 45, "loading...");
-
-  u8g2.sendBuffer();
-  delay(16);
+void time(){
+  RTC_DATA_ATTR int8_t hours = 3; 
+  RTC_DATA_ATTR int8_t minutes = 33; 
+  RTC_DATA_ATTR int8_t seconds = 33; 
 }
 
 void init()
@@ -55,6 +42,17 @@ void init()
 
   u8g2.begin();
   u8g2.setPowerSave(0);
+
+  u8g2.clearBuffer();
+
+  u8g2.setFont(u8g2_font_helvB18_tf);
+  u8g2.drawStr(4, 42, "esp-board");
+
+  u8g2.setFont(u8g2_font_tiny5_tf);
+  u8g2.drawStr(48, 62, "loading...");
+
+  u8g2.sendBuffer();
+  delay(16);
 }
 
 void input()
@@ -101,37 +99,13 @@ void input()
   }
   delay(20);
 
-  switch (APP_STATE)
-  {
-  case MainMenu:
-    switch (current_item)
-    {
-    case 1:
-      menuDraw("Extras", EXTRAS_ITEMS);
-      break;
-    case 2:
-      menuDraw("TEST", EXTRAS_ITEMS);
-      break;
-    case 3:
-      menuDraw("TEST V2", EXTRAS_ITEMS);
-      break;
-
-    default:
-      break;
-    }
-    break;
-
-  default:
-    break;
-  }
-
   prev_btn_up = cur_btn_up;
   prev_btn_down = cur_btn_down;
   prev_btn_left = cur_btn_left;
   prev_btn_right = cur_btn_right;
 }
 
-void menuDraw(const char *name, const char **itemsArray)
+void menuDraw(const char *name, const char **itemsArray, int8_t itemsArrayCount)
 {
   u8g2.clearBuffer();
   u8g2.drawRFrame(7, 10, 46, 42, 5);
@@ -140,6 +114,8 @@ void menuDraw(const char *name, const char **itemsArray)
   u8g2.drawStr(60, 19, name);
 
   u8g2.setFont(u8g2_font_tiny5_tf);
+
+  int8_t items_draw = itemsArrayCount;
 
   for (int i = 0; i < items_draw; i++)
   {
@@ -150,7 +126,24 @@ void menuDraw(const char *name, const char **itemsArray)
   delay(16);
 }
 
-/*=============суперудобныйразделитель=============*/
+void drawAllMenu(){
+  switch (APP_STATE)
+  {
+  case MainMenu:
+    switch (current_item)
+    {
+    case 1:
+      menuDraw("Extras", EXTRAS_ITEMS, EXTRAS_ITEMS_COUNT);
+      break;
+    case 2:
+      menuDraw("TEST", EXTRAS_ITEMS, EXTRAS_ITEMS_COUNT);
+      break;
+    case 3:
+      menuDraw("TEST V2", EXTRAS_ITEMS, EXTRAS_ITEMS_COUNT);
+      break;
+    }
+  }
+}
 
 void setup()
 {
@@ -160,11 +153,12 @@ void setup()
   pinMode(BTN_RIGHT, INPUT_PULLUP);
 
   init();
-  loading();
-  delay(1500);
 }
 
 void loop()
 {
   input();
+  drawAllMenu();
 }
+
+// compile = arduino-cli compile -b esp32:esp32:esp32c3 -u -p (YOUR COM-PORT - arduino-cli board list)
