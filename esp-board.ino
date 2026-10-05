@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <Wire.h>
+#include <WiFi.h>
+#include <time.h>
 
 #define BTN_DOWN 0
 #define BTN_LEFT 1
@@ -10,7 +12,16 @@
 #define I2C_SDA 8
 #define I2C_SCL 9
 
+#define WIFI_SSID     // enter your wifi ssid (name)
+#define WIFI_PASSWORD // enter your wifi password
+
 int8_t current_item = 1;
+
+RTC_DATA_ATTR int8_t hours = 3;
+RTC_DATA_ATTR int8_t minutes = 33;
+RTC_DATA_ATTR int8_t seconds = 33;
+
+RTC_DATA_ATTR int8_t utc = 3;
 
 const char *EXTRAS_ITEMS[] = {
     "IDONTKNOW",
@@ -30,11 +41,42 @@ AppState APP_STATE = MainMenu;
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE, I2C_SCL, I2C_SDA);
 
-void time(){
-  RTC_DATA_ATTR int8_t hours = 3; 
-  RTC_DATA_ATTR int8_t minutes = 33; 
-  RTC_DATA_ATTR int8_t seconds = 33; 
+struct tm timeInfo;
+
+void syncTime()
+{
+
+  WiFi.mode(WIFI_STA);
+  WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  for (int8_t i = 0; i <= 100; i++)
+  {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      break;
+    }
+    delay(500);
+  }
+
+  configTime(utc * 3600, 0, "pool.ntp.org", "time.google.com");
+
+  while (!getLocalTime(&timeInfo))
+  {
+    delay(75);
+  }
 }
+
+void updateClock()
+{
+  if (getLocalTime(&timeInfo))
+  {
+    hours   = timeInfo.tm_hour;
+    minutes = timeInfo.tm_min;
+    seconds = timeInfo.tm_sec;
+  }
+}
+
+
 
 void init()
 {
@@ -52,7 +94,19 @@ void init()
   u8g2.drawStr(48, 62, "loading...");
 
   u8g2.sendBuffer();
-  delay(16);
+
+  syncTime();
+}
+
+void statusBarDraw()
+{
+  char clockText[9];
+
+  snprintf(clockText, sizeof(clockText), "%02d:%02d:%02d", hours, minutes, seconds);
+
+  u8g2.setFont(u8g2_font_micro_tn);
+
+  u8g2.drawStr(48, 64, clockText);
 }
 
 void input()
@@ -108,10 +162,13 @@ void input()
 void menuDraw(const char *name, const char **itemsArray, int8_t itemsArrayCount)
 {
   u8g2.clearBuffer();
-  u8g2.drawRFrame(7, 10, 46, 42, 5);
+
+  statusBarDraw();
+
+  u8g2.drawRFrame(10, 10, 46, 42, 5);
 
   u8g2.setFont(u8g2_font_t0_14b_me);
-  u8g2.drawStr(60, 19, name);
+  u8g2.drawStr(64, 19, name);
 
   u8g2.setFont(u8g2_font_tiny5_tf);
 
@@ -119,14 +176,15 @@ void menuDraw(const char *name, const char **itemsArray, int8_t itemsArrayCount)
 
   for (int i = 0; i < items_draw; i++)
   {
-    u8g2.drawStr(62, 28 + (7 * i), itemsArray[i]);
+    u8g2.drawStr(66, 28 + (7 * i), itemsArray[i]);
   }
 
   u8g2.sendBuffer();
   delay(16);
 }
 
-void drawAllMenu(){
+void drawAllMenu()
+{
   switch (APP_STATE)
   {
   case MainMenu:
@@ -157,6 +215,7 @@ void setup()
 
 void loop()
 {
+  updateClock();
   input();
   drawAllMenu();
 }
