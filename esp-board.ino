@@ -12,25 +12,43 @@
 #define I2C_SDA 8
 #define I2C_SCL 9
 
-#define WIFI_SSID     // enter your wifi ssid (name)
-#define WIFI_PASSWORD // enter your wifi password
+#define WIFI_SSID "zte10"
+#define WIFI_PASSWORD "3963939639"
 
 int8_t current_item = 1;
 
-RTC_DATA_ATTR int8_t hours = 3;
-RTC_DATA_ATTR int8_t minutes = 33;
-RTC_DATA_ATTR int8_t seconds = 33;
+RTC_DATA_ATTR int8_t hours = 0;
+RTC_DATA_ATTR int8_t minutes = 0;
+RTC_DATA_ATTR int8_t seconds = 0;
 
 RTC_DATA_ATTR int8_t utc = 3;
 
 const char *EXTRAS_ITEMS[] = {
-    "IDONTKNOW",
-    "IDONTKNOW",
-    "IDONTKNOW",
-    "IDONTKNOW",
-};
+    "CALCULATOR",
+    "FLASHLIGHT",
+    "CALENDAR",
+    "CLOCK",
+    "WEATHER"};
 
 const int8_t EXTRAS_ITEMS_COUNT = sizeof(EXTRAS_ITEMS) / sizeof(EXTRAS_ITEMS[0]);
+
+const char *GAMES_ITEMS[] = {
+    "TETRIS",
+    "DYNO",
+    "PONG",
+    "COUNTER"};
+
+const int8_t GAMES_ITEMS_COUNT = sizeof(GAMES_ITEMS) / sizeof(GAMES_ITEMS[0]);
+
+const char *SETTINGS_ITEMS[] = {
+    "TIME",
+    "WIFI",
+    "BRIGHTNESS",
+    "LANGUAGE",
+    "DEEP-SLEEP",
+    "ABOUT"};
+
+const int8_t SETTINGS_ITEMS_COUNT = sizeof(SETTINGS_ITEMS) / sizeof(SETTINGS_ITEMS[0]);
 
 enum AppState
 {
@@ -49,7 +67,7 @@ void syncTime()
   WiFi.mode(WIFI_STA);
   WiFi.setTxPower(WIFI_POWER_8_5dBm);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  for (int8_t i = 0; i <= 100; i++)
+  for (int8_t i = 0; i <= 25; i++)
   {
     if (WiFi.status() == WL_CONNECTED)
     {
@@ -70,13 +88,11 @@ void updateClock()
 {
   if (getLocalTime(&timeInfo))
   {
-    hours   = timeInfo.tm_hour;
+    hours = timeInfo.tm_hour;
     minutes = timeInfo.tm_min;
     seconds = timeInfo.tm_sec;
   }
 }
-
-
 
 void init()
 {
@@ -172,10 +188,9 @@ void menuDraw(const char *name, const char **itemsArray, int8_t itemsArrayCount)
 
   u8g2.setFont(u8g2_font_tiny5_tf);
 
-  int8_t items_draw = itemsArrayCount;
-
-  for (int i = 0; i < items_draw; i++)
+  for (int i = 0; i < 4; i++)
   {
+
     u8g2.drawStr(66, 28 + (7 * i), itemsArray[i]);
   }
 
@@ -194,10 +209,10 @@ void drawAllMenu()
       menuDraw("Extras", EXTRAS_ITEMS, EXTRAS_ITEMS_COUNT);
       break;
     case 2:
-      menuDraw("TEST", EXTRAS_ITEMS, EXTRAS_ITEMS_COUNT);
+      menuDraw("Games", GAMES_ITEMS, GAMES_ITEMS_COUNT);
       break;
     case 3:
-      menuDraw("TEST V2", EXTRAS_ITEMS, EXTRAS_ITEMS_COUNT);
+      menuDraw("Settings", SETTINGS_ITEMS, SETTINGS_ITEMS_COUNT);
       break;
     }
   }
