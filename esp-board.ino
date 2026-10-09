@@ -15,7 +15,7 @@
 #define WIFI_SSID "zte10"
 #define WIFI_PASSWORD "3963939639"
 
-int8_t current_item = 1;
+int8_t current_item = 0;
 
 RTC_DATA_ATTR int8_t hours = 0;
 RTC_DATA_ATTR int8_t minutes = 0;
@@ -52,7 +52,10 @@ const int8_t SETTINGS_ITEMS_COUNT = sizeof(SETTINGS_ITEMS) / sizeof(SETTINGS_ITE
 
 enum AppState
 {
-  MainMenu
+  MainMenu,
+  Extras,
+  Games,
+  Settings
 };
 
 AppState APP_STATE = MainMenu;
@@ -103,11 +106,11 @@ void init()
 
   u8g2.clearBuffer();
 
-  u8g2.setFont(u8g2_font_helvB18_tf);
-  u8g2.drawStr(4, 42, "esp-board");
+  u8g2.setFont(u8g2_font_tenthinguys_tr);
+  u8g2.drawStr((128 - u8g2.getUTF8Width("esp-board")) / 2, 37, "esp-board");
 
   u8g2.setFont(u8g2_font_tiny5_tf);
-  u8g2.drawStr(48, 62, "loading...");
+  u8g2.drawStr((128 - u8g2.getUTF8Width("loading...")) / 2, 47, "loading...");
 
   u8g2.sendBuffer();
 
@@ -122,7 +125,7 @@ void statusBarDraw()
 
   u8g2.setFont(u8g2_font_micro_tn);
 
-  u8g2.drawStr(48, 64, clockText);
+  u8g2.drawStr(3, 7, clockText);
 }
 
 void input()
@@ -132,7 +135,7 @@ void input()
   switch (APP_STATE)
   {
   case MainMenu:
-    max_items = 3;
+    max_items = 2;
     break;
 
   default:
@@ -158,15 +161,12 @@ void input()
   }
   else if (cur_btn_up == LOW && prev_btn_up == HIGH)
   {
-    if (current_item > 1)
+    if (current_item > 0)
     {
       current_item--;
     }
   }
-  else if (cur_btn_left == LOW && prev_btn_left == HIGH)
-  {
-    // code..
-  }
+
   delay(20);
 
   prev_btn_up = cur_btn_up;
@@ -175,23 +175,30 @@ void input()
   prev_btn_right = cur_btn_right;
 }
 
-void menuDraw(const char *name, const char **itemsArray, int8_t itemsArrayCount)
+void menuDraw(const char *name, int8_t itemsDraw)
 {
   u8g2.clearBuffer();
 
   statusBarDraw();
 
-  u8g2.drawRFrame(10, 10, 46, 42, 5);
+  u8g2.drawRFrame((128 - 54) / 2, 10, 54, 36, 5);
 
-  u8g2.setFont(u8g2_font_t0_14b_me);
-  u8g2.drawStr(64, 19, name);
+  u8g2.setFont(u8g2_font_tenthinguys_tr);
 
-  u8g2.setFont(u8g2_font_tiny5_tf);
+  int8_t textWidth = u8g2.getUTF8Width(name);
+  int8_t x = (128 - textWidth) / 2;
 
-  for (int i = 0; i < 4; i++)
+  u8g2.drawStr(x, 60, name);
+
+  for (int8_t i = 0; i < itemsDraw; i++)
   {
+    int8_t y = 2 + i * (6 + 3);
+    u8g2.drawFrame(128 - 10, y, 8, 8);
 
-    u8g2.drawStr(66, 28 + (7 * i), itemsArray[i]);
+    if (i == current_item)
+    {
+      u8g2.drawBox(128 - 10, y, 8, 8);
+    }
   }
 
   u8g2.sendBuffer();
@@ -205,14 +212,14 @@ void drawAllMenu()
   case MainMenu:
     switch (current_item)
     {
+    case 0:
+      menuDraw("Extras", 3);
+      break;
     case 1:
-      menuDraw("Extras", EXTRAS_ITEMS, EXTRAS_ITEMS_COUNT);
+      menuDraw("Games", 3);
       break;
     case 2:
-      menuDraw("Games", GAMES_ITEMS, GAMES_ITEMS_COUNT);
-      break;
-    case 3:
-      menuDraw("Settings", SETTINGS_ITEMS, SETTINGS_ITEMS_COUNT);
+      menuDraw("Settings", 3);
       break;
     }
   }
